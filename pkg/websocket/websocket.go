@@ -20,6 +20,10 @@ func NewWebSocketMessageSender() *WebSocketMessageSender {
 	}
 }
 
+func (wsms *WebSocketMessageSender) CreateConnection(member string, conn *websocket.Conn) {
+	wsms.connections[member] = conn
+}
+
 func (wsms *WebSocketMessageSender) SendMessage(member string, message string) error {
 	conn, ok := wsms.connections[member]
 	if !ok {
