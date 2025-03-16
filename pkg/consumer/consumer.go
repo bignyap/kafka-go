@@ -8,7 +8,7 @@ import (
 	"strconv"
 
 	"github.com/IBM/sarama"
-	"github.com/bignyap/kafka-go/pkg/db"
+	"github.com/bignyap/kafka-go/pkg/chat"
 	"github.com/bignyap/kafka-go/pkg/models"
 	"github.com/bignyap/kafka-go/pkg/websocket"
 )
@@ -40,15 +40,15 @@ func (kc *KafkaConsumer) Consume(ctx context.Context, handler ConsumerHandler) e
 }
 
 type consumerHandler struct {
-	cmm db.ChatMessageManager
-	crm db.ChatRoomManager
+	cmm chat.ChatMessageManager
+	crm chat.ChatRoomManager
 	ms  websocket.MessageSender
 }
 
 func NewConsumerHandler(dbConn *sql.DB, ms websocket.MessageSender) *consumerHandler {
 	return &consumerHandler{
-		cmm: db.NewChatMessageManagerImpl(dbConn),
-		crm: db.NewChatRoomManagerImpl(dbConn),
+		cmm: chat.NewChatMessageManagerImpl(dbConn),
+		crm: chat.NewChatRoomManagerImpl(dbConn),
 		ms:  ms,
 	}
 }
@@ -71,14 +71,14 @@ func (h *consumerHandler) ConsumeClaim(sess sarama.ConsumerGroupSession, claim s
 		}
 
 		// Store the message in the database
-		err = h.cmm.SendMessage(strconv.Itoa(chatMessage.RoomID), chatMessage.Message)
+		err = h.cmm.SendMessage(chatMessage.RoomID, chatMessage.Message)
 		if err != nil {
 			log.Printf("Error while storing message: %v", err)
 			continue
 		}
 
 		// Get the members of the chat room
-		members, err := h.crm.GetMembers(strconv.Itoa(chatMessage.RoomID))
+		members, err := h.crm.GetMembers(chatMessage.RoomID)
 		if err != nil {
 			log.Printf("Error while getting members: %v", err)
 			continue

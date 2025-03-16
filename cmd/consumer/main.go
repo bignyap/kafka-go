@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"log"
 	"os"
 	"os/signal"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/IBM/sarama"
 	"github.com/bignyap/kafka-go/pkg/consumer"
+	"github.com/bignyap/kafka-go/pkg/db"
 	"github.com/bignyap/kafka-go/pkg/websocket"
 )
 
@@ -31,7 +31,11 @@ func main() {
 	// Here you need to implement the logic to manage WebSocket connections
 	// This includes opening connections when a member joins, and closing connections when a member leaves
 
-	db, err := sql.Open("mysql", "user:password@/dbname")
+	dbConfig := &db.DBConfig{
+		SQLDriver:     "mysql",
+		ConnectionURL: "user:password@/dbname",
+	}
+	db, err := dbConfig.Connect()
 	if err != nil {
 		log.Fatal(err)
 	}
