@@ -9,7 +9,7 @@ import (
 	"github.com/bignyap/kafka-go/pkg/producer"
 )
 
-func SendMessageHandler(producer producer.KafkaProducer) http.HandlerFunc {
+func SendMessageHandler(kafkaProducer producer.KafkaProducer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := io.ReadAll(r.Body)
 		defer r.Body.Close()
@@ -18,7 +18,9 @@ func SendMessageHandler(producer producer.KafkaProducer) http.HandlerFunc {
 			return
 		}
 
-		if err := producer.ProduceMsgToKafka("test", string(body)); err != nil {
+		if err := producer.ProduceMsgToKafka(
+			kafkaProducer, "test", string(body),
+		); err != nil {
 			http.Error(w, fmt.Sprintf("error producing Kafka message: %v", err), http.StatusInternalServerError)
 			return
 		}
@@ -27,9 +29,9 @@ func SendMessageHandler(producer producer.KafkaProducer) http.HandlerFunc {
 	}
 }
 
-func StartWebServer(producer producer.KafkaProducer) {
+func StartWebServer(kafkaProducer producer.KafkaProducer) {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/send-message", SendMessageHandler(producer))
+	mux.HandleFunc("/send-message", SendMessageHandler(kafkaProducer))
 
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }

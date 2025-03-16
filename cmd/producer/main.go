@@ -4,11 +4,12 @@ import (
 	"log"
 
 	"github.com/IBM/sarama"
-	"github.com/bignyap/kafka-go/pkg/handler"
+	"github.com/bignyap/kafka-go/handler"
 	"github.com/bignyap/kafka-go/pkg/producer"
 )
 
 func main() {
+
 	config := sarama.NewConfig()
 	config.Producer.RequiredAcks = sarama.WaitForLocal
 	config.Producer.Return.Errors = true
@@ -19,7 +20,7 @@ func main() {
 	}
 	defer producer.Close()
 
-	// Start listening for errors
+	// Start listening for errors for kafka producer client
 	producer.StartErrorListener()
 
 	handler.StartWebServer(producer)
