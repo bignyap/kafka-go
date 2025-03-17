@@ -10,7 +10,7 @@ import (
 	"github.com/IBM/sarama"
 	"github.com/bignyap/kafka-go/pkg/chat"
 	"github.com/bignyap/kafka-go/pkg/models"
-	"github.com/bignyap/kafka-go/pkg/websocket"
+	"github.com/bignyap/kafka-go/pkg/ws"
 )
 
 type MessageConsumer interface {
@@ -42,10 +42,10 @@ func (kc *KafkaConsumer) Consume(ctx context.Context, handler ConsumerHandler) e
 type consumerHandler struct {
 	cmm chat.ChatMessageManager
 	crm chat.ChatRoomManager
-	ms  websocket.MessageSender
+	ms  ws.MessageSender
 }
 
-func NewConsumerHandler(dbConn *sql.DB, ms websocket.MessageSender) *consumerHandler {
+func NewConsumerHandler(dbConn *sql.DB, ms ws.MessageSender) *consumerHandler {
 	return &consumerHandler{
 		cmm: chat.NewChatMessageManagerImpl(dbConn),
 		crm: chat.NewChatRoomManagerImpl(dbConn),

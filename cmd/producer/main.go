@@ -6,6 +6,7 @@ import (
 	"github.com/IBM/sarama"
 	"github.com/bignyap/kafka-go/handler"
 	"github.com/bignyap/kafka-go/pkg/producer"
+	"github.com/bignyap/kafka-go/pkg/ws"
 )
 
 func main() {
@@ -23,5 +24,8 @@ func main() {
 	// Start listening for errors for kafka producer client
 	producer.StartErrorListener()
 
-	handler.StartWebServer(producer)
+	wsms := ws.NewWebSocketMessageSender()
+
+	handler.StartWebServer(producer, wsms)
+
 }

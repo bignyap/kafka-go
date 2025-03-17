@@ -10,7 +10,7 @@ import (
 	"github.com/IBM/sarama"
 	"github.com/bignyap/kafka-go/pkg/consumer"
 	"github.com/bignyap/kafka-go/pkg/db"
-	"github.com/bignyap/kafka-go/pkg/websocket"
+	"github.com/bignyap/kafka-go/pkg/ws"
 )
 
 func main() {
@@ -27,7 +27,7 @@ func main() {
 	}
 	defer consumerClient.Client.Close()
 
-	messageSender := websocket.NewWebSocketMessageSender()
+	messageSender := ws.NewWebSocketMessageSender()
 	// Here you need to implement the logic to manage WebSocket connections
 	// This includes opening connections when a member joins, and closing connections when a member leaves
 
