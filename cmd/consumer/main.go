@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -39,23 +38,10 @@ func main() {
 	// Here you need to implement the logic to manage WebSocket connections
 	// This includes opening connections when a member joins, and closing connections when a member leaves
 
-	dbUrl := fmt.Sprintf(
-		"%s:%s@/%s",
-		utils.GetEnvString("DB_USER", ""),
-		utils.GetEnvString("DB_PASSWORD", ""),
-		utils.GetEnvString("DB_NAME", ""),
-	)
-	dbConfig := &db.DBConfig{
-		SQLDriver:     utils.GetEnvString("DB_DRIVER", "mysql"),
-		ConnectionURL: dbUrl,
-	}
-	db, err := dbConfig.Connect()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
+	dbConn := db.NewDBConn()
+	defer dbConn.Close()
 
-	consumerHandler := consumer.NewConsumerHandler(db, messageSender)
+	consumerHandler := consumer.NewConsumerHandler(dbConn, messageSender)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	signals := make(chan os.Signal, 1)
