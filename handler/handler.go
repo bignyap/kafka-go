@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/bignyap/kafka-go/pkg/middleware"
 	"github.com/bignyap/kafka-go/pkg/producer"
 	"github.com/bignyap/kafka-go/pkg/ws"
 	"github.com/gorilla/websocket"
@@ -43,10 +44,25 @@ func WebSocketHandler(wsms *ws.WebSocketMessageSender) http.HandlerFunc {
 			log.Println(err)
 			return
 		}
-		// Here you should identify the member. This is just a placeholder.
-		member := "member1"
-		wsms.CreateConnection(member, conn)
+		parsedToken, ok := r.Context().Value("parsedToken").(*middleware.ParsedToken)
+		if !ok {
+			http.Error(
+				w, fmt.Sprintf("error reading token: %v", err),
+				http.StatusBadRequest,
+			)
+			return
+		}
+		wsms.CreateConnection(parsedToken.Sub, conn)
 	}
+}
+
+type Middleware func(http.Handler) http.Handler
+
+func ChainMiddleware(mux http.Handler, middlewares ...Middleware) http.Handler {
+	for _, middleware := range middlewares {
+		mux = middleware(mux)
+	}
+	return mux
 }
 
 func StartWebServer(
@@ -57,5 +73,11 @@ func StartWebServer(
 	mux.HandleFunc("/send-message", SendMessageHandler(kafkaProducer))
 	mux.HandleFunc("/ws", WebSocketHandler(wsms))
 
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	middlewareMux := ChainMiddleware(
+		mux,
+		middleware.CorsMiddleware,
+		middleware.AuthMiddleware,
+		middleware.LoggingMiddleware,
+	)
+	log.Fatal(http.ListenAndServe(":8080", middlewareMux))
 }
