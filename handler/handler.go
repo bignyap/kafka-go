@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/bignyap/kafka-go/pkg/middleware"
 	"github.com/bignyap/kafka-go/pkg/producer"
+	"github.com/bignyap/kafka-go/pkg/utils"
 	"github.com/bignyap/kafka-go/pkg/ws"
 )
 
@@ -23,5 +25,7 @@ func StartWebServer(
 		middleware.AuthMiddleware,
 		middleware.LoggingMiddleware,
 	)
-	log.Fatal(http.ListenAndServe(":8080", middlewareMux))
+	port := utils.GetEnvString("APPLICATION_PORT", "8080")
+	port = fmt.Sprintf(":%s", port)
+	log.Fatal(http.ListenAndServe(port, middlewareMux))
 }

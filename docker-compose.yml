@@ -21,3 +21,20 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+  postgres:
+    image: postgres:15.3-bullseye
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - 'notification_postgres_data:/var/lib/postgresql/data'
+    healthcheck:
+      test: ["CMD", "pg_isready" , "-d", "postgres"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  notification_postgres_data:
+    driver: local
