@@ -1,9 +1,10 @@
 package db
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
-	"log"
+	"time"
 
 	"github.com/bignyap/kafka-go/pkg/utils"
 	_ "github.com/lib/pq"
@@ -32,7 +33,7 @@ func (dbConfig *DBConfig) Connect() (*sql.DB, error) {
 
 }
 
-func NewDBConn() *sql.DB {
+func NewDBConn() (*sql.DB, error) {
 
 	connStr := fmt.Sprintf(
 		"user=%s password=%s dbname=%s sslmode=disable",
@@ -43,13 +44,24 @@ func NewDBConn() *sql.DB {
 
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatal("Error opening connection to the database: ", err)
+		return nil, err
 	}
 
-	err = db.Ping()
+	db.SetMaxOpenConns(maxOpenConns)
+	db.SetMaxIdleConns(maxIdleConns)
+
+	duration, err := time.ParseDuration(maxIdleTime)
 	if err != nil {
-		log.Fatal("Error pinging the database: ", err)
+		return nil, err
+	}
+	db.SetConnMaxIdleTime(duration)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err = db.PingContext(ctx); err != nil {
+		return nil, err
 	}
 
-	return db
+	return db, nil
 }
