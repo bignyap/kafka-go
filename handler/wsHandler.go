@@ -15,7 +15,7 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-func WebSocketHandler(wsms *ws.WebSocketMessageSender) http.HandlerFunc {
+func (app *application) WebSocketHandler(wsms *ws.WebSocketMessageSender) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {

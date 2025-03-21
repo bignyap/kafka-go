@@ -8,7 +8,7 @@ import (
 	"github.com/bignyap/kafka-go/pkg/producer"
 )
 
-func SendMessageHandler(kafkaProducer producer.KafkaProducer) http.HandlerFunc {
+func (app *application) SendMessageHandler(kafkaProducer producer.KafkaProducer) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := io.ReadAll(r.Body)
 		defer r.Body.Close()
@@ -18,7 +18,7 @@ func SendMessageHandler(kafkaProducer producer.KafkaProducer) http.HandlerFunc {
 		}
 
 		if err := producer.ProduceMsgToKafka(
-			kafkaProducer, "test", string(body),
+			app.kafkaProducer, "test", string(body),
 		); err != nil {
 			http.Error(w, fmt.Sprintf("error producing Kafka message: %v", err), http.StatusInternalServerError)
 			return

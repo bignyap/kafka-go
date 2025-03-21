@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/bignyap/kafka-go/pkg/models"
@@ -10,7 +11,10 @@ type ChatRoomStore struct {
 	db *sql.DB
 }
 
-func (chatRoomStore *ChatRoomStore) AddMemberToRoom(roomID int, memberID int) error {
+func (chatRoomStore *ChatRoomStore) AddMemberToRoom(
+	ctx context.Context,
+	roomID int, memberID int,
+) error {
 	_, err := chatRoomStore.db.Exec(
 		"INSERT INTO room_members (room_id, member_id) VALUES (?, ?)",
 		roomID, memberID,
@@ -18,7 +22,10 @@ func (chatRoomStore *ChatRoomStore) AddMemberToRoom(roomID int, memberID int) er
 	return err
 }
 
-func (chatRoomStore *ChatRoomStore) RemoveMemberFromRoom(roomID int, memberID int) error {
+func (chatRoomStore *ChatRoomStore) RemoveMemberFromRoom(
+	ctx context.Context,
+	roomID int, memberID int,
+) error {
 	_, err := chatRoomStore.db.Exec(
 		"DELETE FROM room_members WHERE room_id = ? AND member_id = ?",
 		roomID, memberID,
@@ -26,7 +33,9 @@ func (chatRoomStore *ChatRoomStore) RemoveMemberFromRoom(roomID int, memberID in
 	return err
 }
 
-func (chatRoomStore *ChatRoomStore) GetMembersFromRoom(DB *sql.DB, roomID int) ([]models.Member, error) {
+func (chatRoomStore *ChatRoomStore) GetMembersFromRoom(
+	ctx context.Context, roomID int,
+) ([]models.Member, error) {
 	rows, err := chatRoomStore.db.Query(
 		"SELECT member_id FROM room_members WHERE room_id = ?",
 		roomID,
@@ -52,7 +61,9 @@ func (chatRoomStore *ChatRoomStore) GetMembersFromRoom(DB *sql.DB, roomID int) (
 	return members, nil
 }
 
-func (chatRoomStore *ChatRoomStore) GetChatRoomsForMember(DB *sql.DB, memberID int) ([]models.ChatRoom, error) {
+func (chatRoomStore *ChatRoomStore) GetChatRoomsForMember(
+	ctx context.Context, memberID int,
+) ([]models.ChatRoom, error) {
 	rows, err := chatRoomStore.db.Query(
 		"SELECT room_id FROM room_members WHERE member_id = ?",
 		memberID,

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/IBM/sarama"
@@ -23,6 +24,25 @@ type KafkaProducer interface {
 
 type SaramaProducer struct {
 	producer sarama.AsyncProducer
+}
+
+func NewProducer(addr string) (KafkaProducer, error) {
+
+	config := sarama.NewConfig()
+	config.Producer.RequiredAcks = sarama.WaitForLocal
+	config.Producer.Return.Errors = true
+
+	brokers := strings.Split(addr, ",")
+
+	producer, err := NewSaramaProducer(brokers, config)
+	if err != nil {
+		return nil, err
+	}
+
+	// Start listening for errors for kafka producer client
+	producer.StartErrorListener()
+
+	return producer, nil
 }
 
 func NewSaramaProducer(

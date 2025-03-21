@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/bignyap/kafka-go/pkg/models"
@@ -10,7 +11,10 @@ type MessageStore struct {
 	db *sql.DB
 }
 
-func (msgStore *MessageStore) SendMessageToRoom(roomID int, message string) error {
+func (msgStore *MessageStore) SendMessageToRoom(
+	ctx context.Context,
+	roomID int, message string,
+) error {
 	_, err := msgStore.db.Exec(
 		"INSERT INTO messages (room_id, message) VALUES (?, ?)",
 		roomID, message,
@@ -18,7 +22,9 @@ func (msgStore *MessageStore) SendMessageToRoom(roomID int, message string) erro
 	return err
 }
 
-func (msgStore *MessageStore) GetMessagesFromRoom(roomID int) ([]models.ChatMessage, error) {
+func (msgStore *MessageStore) GetMessagesFromRoom(
+	ctx context.Context, roomID int,
+) ([]models.ChatMessage, error) {
 	rows, err := msgStore.db.Query(
 		"SELECT id, message, timestamp FROM messages WHERE room_id = ?",
 		roomID,
