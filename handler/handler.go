@@ -20,7 +20,7 @@ import (
 
 type Application struct {
 	Config AppConfig
-	Store  store.Store
+	Store  store.ProducerStore
 	Logger *zap.SugaredLogger
 }
 

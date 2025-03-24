@@ -64,7 +64,7 @@ func main() {
 	defer producer.Close()
 
 	// Define the new repository store with db and producer
-	store := store.NewStore(db, producer)
+	store := store.NewProducerStore(db, producer)
 	app := &handler.Application{
 		Config: appConfig,
 		Store:  store,
