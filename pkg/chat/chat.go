@@ -28,7 +28,7 @@ func NewChatRoomManagerImpl(db *sql.DB) ChatRoomManager {
 }
 
 func (crm *ChatRoomManagerImpl) AddMember(roomID int, memberID int) error {
-	return db.AddMemberToRoom(crm.DB, roomID, memberID)
+	return crm.DB.AddMemberToRoom(roomID, memberID)
 }
 
 func (crm *ChatRoomManagerImpl) RemoveMember(roomID int, memberID int) error {

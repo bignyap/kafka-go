@@ -11,52 +11,39 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/bignyap/kafka-go/pkg/db"
 	"github.com/bignyap/kafka-go/pkg/middleware"
 	"github.com/bignyap/kafka-go/pkg/store"
 	"github.com/bignyap/kafka-go/pkg/utils"
 	"go.uber.org/zap"
 )
 
-type application struct {
-	config config
-	store  store.Store
-	logger *zap.SugaredLogger
+type Application struct {
+	Config AppConfig
+	Store  store.Store
+	Logger *zap.SugaredLogger
 }
 
-type config struct {
-	addr     string
-	apiURL   string
-	env      string // Whether production or development
-	dbConfig dbConfig
-	kafkaCfg kafkaConfig
+type AppConfig struct {
+	Address     string
+	ApiURL      string
+	Env         string // Whether production or development
+	Version     string
+	DBConfig    db.DBConfig
+	KafkaConfig KafkaConfig
 }
 
-type kafkaConfig struct {
-	addr string
+type KafkaConfig struct {
+	Address string
 }
 
-type dbConfig struct {
-	username     string
-	password     string
-	database     string
-	maxOpenConns int
-	maxIdleConns int
-	// maxIdleTime  string
-}
+func (app *Application) Run() {
 
-func (app *application) StartWebServer(
-// kafkaProducer producer.KafkaProducer,
-// wsms *ws.WebSocketMessageSender,
-) {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(
-			fmt.Sprintf("Server running on port %s", utils.GetEnvString("APPLICATION_PORT", "8080"))),
-		)
-	})
+	mux.HandleFunc("/health", app.HealthHandler)
 	mux.HandleFunc("/send-message", app.SendMessageHandler())
-	mux.HandleFunc("/ws", app.WebSocketHandler(wsms))
+	mux.HandleFunc("/ws", app.WebSocketHandler())
 
 	middlewareMux := middleware.ChainMiddleware(
 		mux,
@@ -79,7 +66,7 @@ func (app *application) StartWebServer(
 		quit := make(chan os.Signal, 1)
 
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-		s := <-quit
+		// s := <-quit
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()

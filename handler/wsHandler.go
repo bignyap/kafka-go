@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/bignyap/kafka-go/pkg/middleware"
@@ -15,13 +14,15 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-func (app *application) WebSocketHandler(wsms *ws.WebSocketMessageSender) http.HandlerFunc {
+func (app *Application) WebSocketHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		conn, err := upgrader.Upgrade(w, r, nil)
+
+		conn, err := ws.UpgradeToWebSocket(w, r)
 		if err != nil {
-			log.Println(err)
+			http.Error(w, fmt.Sprintf("Error upgrading to WebSocket: %v", err), http.StatusInternalServerError)
 			return
 		}
+
 		parsedToken, ok := r.Context().Value("parsedToken").(*middleware.ParsedToken)
 		if !ok {
 			http.Error(
@@ -30,6 +31,7 @@ func (app *application) WebSocketHandler(wsms *ws.WebSocketMessageSender) http.H
 			)
 			return
 		}
-		wsms.CreateConnection(parsedToken.Sub, conn)
+
+		app.Store.MessageBroadcaster.CreateConnection(parsedToken.Sub, conn)
 	}
 }

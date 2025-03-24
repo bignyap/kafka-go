@@ -1,7 +1,6 @@
 package producer
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -105,10 +104,10 @@ func (sp *SaramaProducer) Close() error {
 	return sp.producer.Close()
 }
 
-func ProduceMsgToKafka(producer KafkaProducer, topic string, message string) error {
-	messageBytes, err := json.Marshal(message)
-	if err != nil {
-		return err
-	}
-	return producer.SendMessage(topic, messageBytes)
-}
+// func ProduceMsgToKafka(producer KafkaProducer, topic string, message string) error {
+// 	messageBytes, err := json.Marshal(message)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return producer.SendMessage(topic, messageBytes)
+// }

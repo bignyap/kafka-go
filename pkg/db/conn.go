@@ -15,46 +15,44 @@ type DBObject interface {
 }
 
 type DBConfig struct {
-	ConnectionURL string
-	SQLDriver     string
+	SQLDriver string
+	URLConfig DBURLConfig
+	// ConnectionURL string
+	PoolConfig DBPoolConfig
 }
 
-// func NewDBConfig() DBConfig {
-// 	return DBConfig{
-// 		SQLDriver:     "mysql",
-// 		ConnectionURL: "user:password@/dbname",
-// 	}
-// }
+type DBURLConfig struct {
+	Username   string
+	Password   string
+	Database   string
+	Properties string
+}
+
+type DBPoolConfig struct {
+	MaxOpenConnections int
+	MaxIdleConnections int
+	MaxIdleTime        int
+}
 
 func (dbConfig *DBConfig) Connect() (*sql.DB, error) {
 
-	// sql.Open("mysql", "user:password@/dbname")
-	return sql.Open(dbConfig.SQLDriver, dbConfig.ConnectionURL)
-
-}
-
-func NewDBConn() (*sql.DB, error) {
-
+	driver := dbConfig.SQLDriver
 	connStr := fmt.Sprintf(
 		"user=%s password=%s dbname=%s sslmode=disable",
-		utils.GetEnvString("DB_USER", ""),
-		utils.GetEnvString("DB_PASSWORD", ""),
-		utils.GetEnvString("DB_NAME", ""),
+		dbConfig.URLConfig.Username,
+		dbConfig.URLConfig.Database,
+		dbConfig.URLConfig.Database,
 	)
 
-	db, err := sql.Open("postgres", connStr)
+	// sql.Open("mysql", "user:password@/dbname")
+	db, err := sql.Open(driver, connStr)
 	if err != nil {
 		return nil, err
 	}
 
-	db.SetMaxOpenConns(maxOpenConns)
-	db.SetMaxIdleConns(maxIdleConns)
-
-	duration, err := time.ParseDuration(maxIdleTime)
-	if err != nil {
-		return nil, err
-	}
-	db.SetConnMaxIdleTime(duration)
+	db.SetMaxOpenConns(dbConfig.PoolConfig.MaxOpenConnections)
+	db.SetMaxIdleConns(dbConfig.PoolConfig.MaxIdleConnections)
+	db.SetConnMaxIdleTime(time.Duration(dbConfig.PoolConfig.MaxIdleTime))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -64,9 +62,29 @@ func NewDBConn() (*sql.DB, error) {
 	}
 
 	return db, nil
+
 }
 
-func withTx(db *sql.DB, ctx context.Context, fn func(*sql.Tx) error) error {
+func NewDBConn() (*sql.DB, error) {
+
+	dbconfig := DBConfig{
+		SQLDriver: utils.GetEnvString("SQL_DRIVER", "postgres"),
+		URLConfig: DBURLConfig{
+			Username: utils.GetEnvString("DB_USER", ""),
+			Password: utils.GetEnvString("DB_PASSWORD", ""),
+			Database: utils.GetEnvString("DB_NAME", ""),
+		},
+		PoolConfig: DBPoolConfig{
+			MaxOpenConnections: utils.GetEnvInt("MAX_OPEN_CONNECTIONS", 10),
+			MaxIdleConnections: utils.GetEnvInt("MAX_IDLE_CONNECTIONS", 10),
+			MaxIdleTime:        utils.GetEnvInt("MAX_IDLE_TIME", 10),
+		},
+	}
+
+	return dbconfig.Connect()
+}
+
+func WithTx(db *sql.DB, ctx context.Context, fn func(*sql.Tx) error) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err

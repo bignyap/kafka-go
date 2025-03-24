@@ -2,32 +2,24 @@ package ws
 
 import (
 	"fmt"
+	"log"
+	"net/http"
 
 	"github.com/gorilla/websocket"
 )
 
-type MessageSender interface {
-	SendMessage(member string, message string) error
-}
+func UpgradeToWebSocket(w http.ResponseWriter, r *http.Request) (*websocket.Conn, error) {
 
-type WebSocketMessageSender struct {
-	connections map[string]*websocket.Conn
-}
-
-func NewWebSocketMessageSender() *WebSocketMessageSender {
-	return &WebSocketMessageSender{
-		connections: make(map[string]*websocket.Conn),
+	var upgrader = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
 	}
-}
 
-func (wsms *WebSocketMessageSender) CreateConnection(member string, conn *websocket.Conn) {
-	wsms.connections[member] = conn
-}
-
-func (wsms *WebSocketMessageSender) SendMessage(member string, message string) error {
-	conn, ok := wsms.connections[member]
-	if !ok {
-		return fmt.Errorf("no connection found for member: %s", member)
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Printf("Error upgrading to WebSocket: %v", err)
+		return nil, fmt.Errorf("failed to upgrade connection to WebSocket: %w", err)
 	}
-	return conn.WriteMessage(websocket.TextMessage, []byte(message))
+
+	return conn, nil
 }

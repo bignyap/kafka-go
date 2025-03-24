@@ -5,6 +5,8 @@ import (
 	"database/sql"
 
 	"github.com/bignyap/kafka-go/pkg/models"
+	"github.com/bignyap/kafka-go/pkg/producer"
+	"github.com/gorilla/websocket"
 )
 
 type Store struct {
@@ -18,11 +20,20 @@ type Store struct {
 		SendMessageToRoom(context.Context, int, string) error
 		GetMessagesFromRoom(context.Context, int) ([]models.ChatMessage, error)
 	}
+	MessageProducer interface {
+		ProduceChatMessages(context.Context, string, string) error
+	}
+	MessageBroadcaster interface {
+		CreateConnection(string, *websocket.Conn) error
+		SendMessage(string, string) error
+	}
 }
 
-func NewStore(db *sql.DB) Store {
+func NewStore(db *sql.DB, producer producer.KafkaProducer) Store {
 	return Store{
-		ChatRoom: &ChatRoomStore{db},
-		Message:  &MessageStore{db},
+		ChatRoom:           &ChatRoomStore{db},
+		Message:            &MessageStore{db},
+		MessageProducer:    KafkaProducerStore{producer},
+		MessageBroadcaster: &WebSocketMessageSender{},
 	}
 }
