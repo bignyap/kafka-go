@@ -73,14 +73,19 @@ func NewProducerStore(db *sql.DB, producer producer.KafkaProducer) ProducerStore
 func NewConsumerStore(
 	db *sql.DB, consumer consumer.KafkaConsumer,
 ) ConsumerStore {
+	wsStore := &WebSocketMessageSender{}
 	return ConsumerStore{
 		DataStore: DataStore{
 			ChatRoom: &ChatRoomStore{db},
 			Message:  &MessageStore{db},
 		},
 		WebSocketStore: WebSocketStore{
-			MessageBroadcaster: &WebSocketMessageSender{},
+			MessageBroadcaster: wsStore,
 		},
-		MessageConsumer: KafkaConsumerStore{consumer},
+		MessageConsumer: KafkaConsumerStore{
+			cmm: consumer,
+			crm: db,
+			ms:  wsStore,
+		},
 	}
 }
