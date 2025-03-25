@@ -14,7 +14,6 @@ import (
 	"github.com/bignyap/kafka-go/pkg/db"
 	"github.com/bignyap/kafka-go/pkg/store"
 	"github.com/bignyap/kafka-go/pkg/utils"
-	"github.com/bignyap/kafka-go/pkg/ws"
 	"go.uber.org/zap"
 )
 
@@ -70,6 +69,9 @@ func main() {
 	}
 	defer consumer.Close()
 
+	messageSender := store.NewWebSocketMessageSender()
+	consumerHandler := consumer.NewConsumerHandler(dbConn, messageSender)
+
 	// Define the new repository store with db and producer
 	store := store.NewConsumerStore(db, consumer)
 	app := &handler.Application{
@@ -85,15 +87,6 @@ func main() {
 	expvar.Publish("goroutines", expvar.Func(func() any {
 		return runtime.NumGoroutine()
 	}))
-
-	messageSender := ws.NewWebSocketMessageSender()
-	// Here you need to implement the logic to manage WebSocket connections
-	// This includes opening connections when a member joins, and closing connections when a member leaves
-
-	dbConn := db.NewDBConn()
-	defer dbConn.Close()
-
-	consumerHandler := consumer.NewConsumerHandler(dbConn, messageSender)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	signals := make(chan os.Signal, 1)
